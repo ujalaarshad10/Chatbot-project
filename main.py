@@ -10,6 +10,10 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, Syst
 # from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 
 # load_dotenv()
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
