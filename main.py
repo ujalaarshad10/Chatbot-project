@@ -1,4 +1,7 @@
 import os
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 # from dotenv import load_dotenv
 from langchain.tools import Tool
 from langchain_groq import ChatGroq
@@ -10,9 +13,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, Syst
 # from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 
 
 # load_dotenv()
