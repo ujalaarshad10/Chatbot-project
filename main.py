@@ -1,20 +1,22 @@
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from langchain.tools import Tool
 from langchain_groq import ChatGroq
-from langchain_community.llms import LlamaCpp
-from langchain_community.chat_models import ChatLlamaCpp
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.agents import AgentExecutor, create_tool_calling_agent, initialize_agent,AgentType
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 import requests
 from bs4 import BeautifulSoup
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate, PromptTemplate, HumanMessagePromptTemplate
-from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
+# from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
+# load_dotenv()
+# GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
+import streamlit as st
+
+# Retrieve API key from Streamlit secrets
+GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
 
 # Check if the key was retrieved successfully
 if GROQ_API_KEY:
