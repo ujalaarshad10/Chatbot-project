@@ -1,8 +1,8 @@
 import os
-# __import__('pysqlite3')
-# import sys
-# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-from dotenv import load_dotenv
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# from dotenv import load_dotenv
 from langchain.tools import Tool
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -17,13 +17,13 @@ from huggingface_hub import login
 import time, random
 
 
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
+# load_dotenv()
+# GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 import streamlit as st
 
 # # Retrieve API key from Streamlit secrets
-# GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
-# login(st.secrets["HUGGINGFACE_API_KEY"])
+GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
+login(st.secrets["HUGGINGFACE_API_KEY"])
 
 
 
