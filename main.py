@@ -13,7 +13,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, Syst
 # from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-
+from huggingface_hub import login
 
 
 # load_dotenv()
@@ -22,6 +22,9 @@ import streamlit as st
 
 # Retrieve API key from Streamlit secrets
 GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
+login(st.secrets["HUGGINGFACE_API_KEY"])
+
+
 
 # Check if the key was retrieved successfully
 if GROQ_API_KEY:
