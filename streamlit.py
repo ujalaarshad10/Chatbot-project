@@ -23,11 +23,11 @@ def handle_user_input(prompt: str):
     # Generate response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            input_prompt = f"Here is the user query: {prompt}\n\n Search for relevant information on the website and vector database. And give a useful response to the customer."
+            input_prompt = f"Here is the user query: {prompt}\n\n Search for relevant information on the website and vector database. Never useless things like from where you get information And give a useful response to the customer. If you dont have information then give a general response to help user"
             response = agent_executor.invoke({"input": input_prompt})
             formatted_response = response
-            st.markdown(f"**Input:** {formatted_response['input']}\n\n**Output:** {formatted_response['output']}")
-            st.session_state.messages.append({"role": "assistant", "content": f"**Input:** {formatted_response['input']}\n\n**Output:** {formatted_response['output']}"})
+            st.markdown(f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}")
+            st.session_state.messages.append({"role": "assistant", "content": f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}"})
             # st.markdown(f"{formatted_response}")
 
 def main():

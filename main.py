@@ -1,8 +1,8 @@
 import os
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-# from dotenv import load_dotenv
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+from dotenv import load_dotenv
 from langchain.tools import Tool
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -17,13 +17,13 @@ from huggingface_hub import login
 import time, random
 
 
-# load_dotenv()
-# GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 import streamlit as st
 
-# Retrieve API key from Streamlit secrets
-GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
-login(st.secrets["HUGGINGFACE_API_KEY"])
+# # Retrieve API key from Streamlit secrets
+# GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
+# login(st.secrets["HUGGINGFACE_API_KEY"])
 
 
 
@@ -32,7 +32,7 @@ if GROQ_API_KEY:
     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 
-llm = ChatGroq(model="llama3-70b-8192")
+llm = ChatGroq(model="llama-3.3-70b-versatile")
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     model_kwargs={'device': 'cpu'}
@@ -165,6 +165,7 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 Priotize Search over retriver tool, cause it is more accurate.
                 if you dont get relevant information from the search tool, then use the retriever tool(important). 
                 If one time search is not enough, use the search tool again with different queries.
+                Answwer the general conversation like "hi" or "hello" in gernal way without using tools. 
                 Answer only in Danish.
                 """
             )
