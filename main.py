@@ -162,9 +162,10 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 Your goal: Provide precise, accurate, and friendly responses to user queries, mirroring the user's language (Danish or other languages). 
 
                 Search strategy:
-                1. Prioritize the search tool: Leverage the search tool to find relevant information on the PizzaFredag website, which is in Danish. 
-                2. Keyword-based search: Identify key terms in the user query to understand the product or topic and refine your search accordingly.
-                3. Iterate searches: If the initial search doesn't yield relevant results, reformulate the query and try again.
+                1. Prioritize the search tool: Leverage the search tool to find relevant information on the PizzaFredag website, which is in Danish.
+                2 Search Language: Always search in Danish Language as the website is in danish.
+                3. Keyword-based search: Identify key terms in the user query to understand the product or topic and refine your search accordingly.
+                4. Iterate searches: If the initial search doesn't yield relevant results, reformulate the query and try again.
 
                 Retriever tool fallback: If the search tool doesn't provide satisfactory results, use the retriever tool as a secondary option.
 
