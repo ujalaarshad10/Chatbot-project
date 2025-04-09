@@ -32,7 +32,7 @@ if GROQ_API_KEY:
     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 
-llm = ChatGroq(model="llama-3.3-70b-versatile")
+llm = ChatGroq(model="llama3-70b-8192")
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     model_kwargs={'device': 'cpu'}
@@ -40,7 +40,7 @@ embeddings = HuggingFaceEmbeddings(
 vectordb = Chroma(persist_directory="./Data/Vectordb", embedding_function=embeddings)
 
 
-def reteriver(query: str, max_results: int = 3):
+def reteriver(query: str, max_results: int = 2):
     docs = vectordb.similarity_search(query, k=max_results)
     vector_info = "\n".join([doc.page_content for doc in docs])
     return vector_info
@@ -158,15 +158,16 @@ agent_prompt = ChatPromptTemplate.from_messages([
             input_variables=[],
             template=(
                 """
-                You are a helpful assistant at PizzaFredag that gives information. Your task is to give a satisfactory response to the user query.
+                You are a helpful assistant at PizzaFredag. Your task is to give a satisfactory response to the user query.
                 Use the given search tool to search there website for relevent information if needed and give a standard assistant response. 
-                Reply in Danish. Improve the search tool output by search the keywords first to get the understanding of what the product is.
+                Reply in Danish if the query is in Danish. Improve the search tool output by search the keywords first to get the understanding of what the product is.
                 Just state the answer to the user to need to tell the user how you got the answer.
                 Priotize Search over retriver tool, cause it is more accurate.
                 if you dont get relevant information from the search tool, then use the retriever tool(important). 
                 If one time search is not enough, use the search tool again with different queries.
-                Answwer the general conversation like "hi" or "hello" in gernal way without using tools. 
-                Answer only in Danish.
+                Answwer the general conversation like "hi" or "hello" in gernal way without using tools.
+                Don't provide false information if you don't have the information.
+                Be specific to the query and give a precise answer. 
                 """
             )
         )
