@@ -165,6 +165,8 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 Priotize Search over retriver tool, cause it is more accurate.
                 if you dont get relevant information from the search tool, then use the retriever tool(important). 
                 If one time search is not enough, use the search tool again with different queries.
+                Analyse the given information with the user query and see if its relevant to the query. 
+                Never mention how you got the information the customer is not intrusted in that.              
                 Answwer the general conversation like "hi" or "hello" in gernal way without using tools.
                 Don't provide false information if you don't have the information.
                 Be specific to the query and give a precise answer. 
