@@ -32,7 +32,7 @@ def handle_user_input(prompt: str):
     # Generate response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            input_prompt = f"Povide a precise response to following user query: {prompt}\n\n Search for relevant information on the website or vector database if search doesnot work.  Never mention useless things like from where you get information And give a useful response to the customer. If you dont have information then give a general response to help user or as the user to be specific."
+            input_prompt = f"Povide a precise response in the same language to following user query: {prompt}\n\n Search for relevant information on the website or vector database if search doesnot work.  Never mention useless things like from where you get information And give a useful response to the customer. If you dont have information then give a general response to help user or as the user to be specific."
             response = agent_executor.invoke({"input": input_prompt, "chat_history": chat_history})
             formatted_response = response
             st.markdown(f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}")
