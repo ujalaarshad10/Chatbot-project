@@ -32,7 +32,7 @@ if GROQ_API_KEY:
     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 
-llm = ChatGroq(model="llama3-70b-8192")
+llm = ChatGroq(model="llama-3.3-70b-versatile")
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     model_kwargs={'device': 'cpu'}
