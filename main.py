@@ -32,7 +32,7 @@ if GROQ_API_KEY:
     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 
-llm = ChatGroq(model="llama-3.3-70b-versatile")
+llm = ChatGroq(model="llama3-70b-8192")
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     model_kwargs={'device': 'cpu'}
@@ -160,9 +160,8 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 """
                 You are a helpful assistant at PizzaFredag. Your job is to answer user query in precise and accurate friendly mannner. 
                 Use the given search tool to search there website for relevent information in Danish as the website is in Dansih, if needed and give a standard assistant response. 
-                Reply in Danish only if the user query is in Danish. Always reply in the same language as the user query. Improve the search tool output by search the keywords first to get the understanding of what the product is.
-                Just state the answer to the user to need to tell the user how you got the answer.
                 Priotize Search over retriver tool, cause it is more accurate.
+                Reply in Danish only if the user query is in Danish. Always reply in the same language as the user query. Improve the search tool output by search the keywords first to get the understanding of what the product is.                
                 if you dont get relevant information from the search tool, then use the retriever tool(important). 
                 If one time search is not enough, use the search tool again with different queries.
                 Analyse the given information with the user query and see if its relevant to the query. if its not then igonre it. And never mention your tools in response user is not interested in that. 
@@ -170,7 +169,7 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 Answwer the general conversation like "hi" or "hello" in gernal way without using tools.
                 Don't provide false information if you don't have the information.
                 Your reponse should only contain the answer to the user query. 
-                Be specific to the query and give a precise answer. 
+                Be specific to the query and give a precise answer with satisfactory response. 
                 """
             )
         )
