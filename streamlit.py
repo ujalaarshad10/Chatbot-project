@@ -19,12 +19,21 @@ def handle_user_input(prompt: str):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
+        
+    # Convert chat history to LangChain-compatible format
+    chat_history = []
+    for message in st.session_state.messages[:-1]:  # exclude current user input
+        if message["role"] == "user":
+            chat_history.append({"type": "human", "content": message["content"]})
+        elif message["role"] == "assistant":
+            chat_history.append({"type": "ai", "content": message["content"]})
+        
 
     # Generate response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             input_prompt = f"Povide a precise response to following user query: {prompt}\n\n Search for relevant information on the website or vector database if search doesnot work.  Never mention useless things like from where you get information And give a useful response to the customer. If you dont have information then give a general response to help user or as the user to be specific."
-            response = agent_executor.invoke({"input": input_prompt})
+            response = agent_executor.invoke({"input": input_prompt, "chat_history": chat_history})
             formatted_response = response
             st.markdown(f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}")
             st.session_state.messages.append({"role": "assistant", "content": f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}"})
