@@ -22,22 +22,22 @@ def handle_user_input(prompt: str):
         
     # Convert chat history to LangChain-compatible format
     chat_history = []
-    for message in st.session_state.messages[:-1]:  # exclude current user input
+    recent_messages = st.session_state.messages[-3:-1]  # get the last 3 messages excluding current user input
+    for message in recent_messages:
         if message["role"] == "user":
             chat_history.append({"type": "human", "content": message["content"]})
         elif message["role"] == "assistant":
             chat_history.append({"type": "ai", "content": message["content"]})
-        
 
     # Generate response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            input_prompt = f"Povide a precise response in the same language as the following user query (!important), User Query: {prompt}\n\n Never mention useless things like from where you get information And give a useful response to the customer. If you dont have information then give a general response to help user or as the user to be specific."
+            input_prompt = f"Povide a precise response in the same language as the following user query (!important), User Query: {prompt}\n\n Search for short keywords to get information. If you dont have information then give a general response to help user or as the user to be specific."
             response = agent_executor.invoke({"input": input_prompt, "chat_history": chat_history})
             formatted_response = response
-            st.markdown(f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}")
-            st.session_state.messages.append({"role": "assistant", "content": f"**Input:** {prompt}\n\n**Output:** {formatted_response['output']}"})
-            # st.markdown(f"{formatted_response}")
+            st.markdown(formatted_response['output'])
+            st.session_state.messages.append({"role": "assistant","content": formatted_response['output']})
+            
 
 def main():
     # Set up Streamlit page

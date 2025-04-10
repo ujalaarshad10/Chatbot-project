@@ -15,13 +15,11 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from huggingface_hub import login
 import time, random
-
-
 # load_dotenv()
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 import streamlit as st
 
-# # Retrieve API key from Streamlit secrets
+# # # Retrieve API key from Streamlit secrets
 GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
 login(st.secrets["HUGGINGFACE_API_KEY"])
 
@@ -39,11 +37,11 @@ embeddings = HuggingFaceEmbeddings(
 )
 vectordb = Chroma(persist_directory="./Data/Vectordb", embedding_function=embeddings)
 
-
 def reteriver(query: str, max_results: int = 2):
     docs = vectordb.similarity_search(query, k=max_results)
-    vector_info = "\n".join([doc.page_content for doc in docs])
-    return vector_info
+    if not docs:
+        return "No relevant documents found."
+    return "\n".join(doc.page_content[:500] if len(doc.page_content) >= 500 else doc.page_content for doc in docs)
 
 # def search_duckduckgo_restricted(query: str, max_results: int = 3):
 #     headers = {
@@ -73,7 +71,7 @@ def reteriver(query: str, max_results: int = 2):
         
 #     return results
     
-def search_duckduckgo_restricted(query: str, max_results: int = 2):
+def search_duckduckgo_restricted(query: str, max_results: int = 3):
     # Define a list of realistic user agents to rotate through.
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
@@ -89,7 +87,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 2):
         "Referer": "https://duckduckgo.com/"
     }
 
-    url = f"https://html.duckduckgo.com/html/?q={query} site:https://pizzafredag.dk/"
+    url = f"https://html.duckduckgo.com/html/?q={query} from https://pizzafredag.dk/"
 
     # Use a session to persist headers and cookies.
     session = requests.Session()
@@ -127,6 +125,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 2):
 
     return results
 
+ 
 # Wrapping the function as a LangChain Tool
 restricted_duckduckgo_tool = Tool(
     name="search",
@@ -138,6 +137,7 @@ restricted_duckduckgo_tool = Tool(
     
     """
 )
+
 
 reteriver_tool = Tool(
     name="reteriver",
@@ -162,20 +162,22 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 **Your goal:** Provide precise, accurate, and friendly responses to user queries, mirroring the user's language (Danish or other languages). 
                 
                 **Search strategy:**
-
-                1. **Prioritize the search tool**: Leverage the search tool to find relevant information on the PizzaFredag website.
+                You can use the search tool to search multiple times with different queries to find the most relevant information.
+                1. **Prioritize the search tool**: Leverage the search tool to find relevant information on the PizzaFredag website. Apart from very general queries, always use the search tool first.
                 2. **Detect user language**: Detect the language of the user query (Danish or other languages) and use the corresponding translation of key terms for searching.
                 3. **Search Website**: The PizzaFredag is in danish so you have to search accoringly in same language.
-                4. **Keyword-based search**: Identify key terms in the user query to understand the product or topic and refine your search accordingly.
-                5. **Iterate searches**: If the initial search doesn't yield relevant results, reformulate the query and try again.
+                4. **Keyword-based search**: Identify key terms in the user query to understand the product or topic and refine your search accordingly, Always search one word at a time.
+                5. **Iterate searches**: If the initial search doesn't yield relevant results, reformulate the search query and try again.
 
                 **Retriever tool fallback**: If the search tool doesn't provide satisfactory results, use the retriever tool as a secondary option.
+                Irelevant Information: Ignore irrelevant information from the search results and reteriver and focus on the most relevant content. 
 
                 **Response guidelines:**
-
+                Follow the user query thoroughly.
                 1. **Language consistency**: Respond in the same language as the user query. Even if the search results are in Danish.
-                2. **Relevant answers only**: Provide specific, concise answers directly addressing the user's query, without mentioning internal tools or methods.
-                3. **No false information**: If you're unsure or lack information, refrain from providing an answer that may be incorrect.
+                2. **Relevant answers only**: Provide specific, concise and accurate answers directly addressing the user's query, 
+                    without mentioning phrases like "search results", "from given information", "from provided information".
+                3. **No false information**: If you're unsure or lack information, refrain from providing an answer that may be incorrect. Never say i dont have the information, be friendly and say i will find the information for you.
                 4. **General conversations**: Respond to general greetings like "hi" or "hello" in a friendly, general manner without relying on tools.
                 5. **Satisfactory responses**: Strive to provide complete, accurate answers that fully address the user's query.
 
@@ -195,62 +197,12 @@ agent_prompt = ChatPromptTemplate.from_messages([
 ])
 
 agent = create_tool_calling_agent(
-    llm =llm, tools=[restricted_duckduckgo_tool,reteriver_tool], prompt=agent_prompt)
+        llm =llm, tools=[restricted_duckduckgo_tool,reteriver_tool], prompt=agent_prompt)
 
 
 agent_executor = AgentExecutor(
-    agent=agent,
-    tools=[restricted_duckduckgo_tool,reteriver_tool],
-    verbose=True,
-    max_iterations=4,
-)
-
-# # Callbacks support token-wise streaming
-# callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
-
-# llm_final = ChatLlamaCpp(
-#     model_path="Models/SnakModelQ4_K_M.gguf",
-#     temperature=0.8,
-#     max_tokens=500,
-#     chat_format="llama-2",
-#     top_p=0.9,
-#     callback_manager=callback_manager,
-#     verbose=True,  
-# )
-
-
-
-
-
-# # --- Define a function that builds the complete chain ---
-# def process_query(query: str) -> str:
-#     # 1. Get response from the agent executor (DuckDuckGo tool)
-#     print("Running agent executor...")
-#     input_query = f"Here is the user query: {query}\n\n Search for relevant information on the website and vector database. And give a useful response to the customer." 
-#     agent_response = agent_executor.invoke({"input":input_query})
-    
-    
-#     agent_response = agent_response['output']
-#     print("\n\nRAW AGENT RESPONSE:",agent_response,"\n\n")
-    
-#     # 4. Create the final prompt template for ChatLlamaCpp
-#     final_prompt_template = (
-#         """
-#         <s>[INST] <<SYS>>
-#         Du er en hjælpsom assistent hos PizzaFreday. Din opgave er udelukkende at forbedre med hensyn til sproglig grammatik, 
-#         ordforråd og relateret til brugerforespørgslen. Returner kun den forbedrede version uden yderligere forklaringer. 
-#         Svar altid på dansk.
-#         <</SYS>>
-#         Forbedre sproget i følgende sammenhæng uden at ændre betydningen og relatere det til brugerforespørgslen         
-#         Her er brugerforespørgsel: {query}
-#         her er information: {context}
-#         [/INST]
-#         """
-#     )
-#     final_prompt = final_prompt_template.format(query=query,context=agent_response)
-    
-#     # 5. Get the final answer from ChatLlamaCpp
-#     print("Generating final answer with ChatLlamaCpp...")
-#     final_answer = llm_final.invoke(final_prompt)
-#     return final_answer
-
+        agent=agent,
+        tools=[restricted_duckduckgo_tool,reteriver_tool],
+        verbose=True,
+        max_iterations=3,
+    )
