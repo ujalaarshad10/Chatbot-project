@@ -10,7 +10,6 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 import requests
 from bs4 import BeautifulSoup
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate, PromptTemplate, HumanMessagePromptTemplate
-# from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from huggingface_hub import login
@@ -19,7 +18,7 @@ import time, random
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 import streamlit as st
 
-# # # Retrieve API key from Streamlit secrets
+# # Retrieve API key from Streamlit secrets
 GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
 login(st.secrets["HUGGINGFACE_API_KEY"])
 
@@ -168,17 +167,16 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 3. Search Website: The PizzaFredag is in danish so you have to search accoringly in same language.
                 4. Keyword-based search: Identify key terms in the user query to understand the product or topic and refine your search accordingly, Always search one word at a time.
                 5. Iterate searches: If the initial search doesn't yield relevant results, reformulate the search query and try again.
-
-                **Retriever tool fallback**: If the search tool doesn't provide satisfactory results, use the retriever tool as a secondary option.
+                6. Use reteriver tool: Use reteriver tool only if 2 times searching with different queries does not yield relevant results.
                 Irelevant Information: Ignore irrelevant information from the search results and reteriver and focus on the most relevant content. 
 
                 Response guidelines:
                 Follow the user query thoroughly.
                 1. Respond in the same language as the user query. Even if the search results are in Danish.
-                2.  Provide specific, concise and accurate answers directly addressing the user's query, 
+                2. Provide specific, concise and accurate answers directly addressing the user's query, 
                     without mentioning phrases like "search results", "from given information", "from provided information".
-                3.  If you're unsure or lack information, refrain from providing an answer that may be incorrect. Never say i dont have the information, be friendly and say i will find the information for you.
-                4.  Respond to general greetings like "hi" or "hello" in a friendly, general manner without relying on tools.
+                3. If you're unsure or lack information, refrain from providing an answer that may be incorrect. Never say i dont have the information, be friendly and say i will find the information for you.
+                4. Respond to general greetings like "hi" or "hello" in a friendly, general manner without relying on tools.
                 """
             )
         )
