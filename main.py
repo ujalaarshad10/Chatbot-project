@@ -199,5 +199,5 @@ agent_executor = AgentExecutor(
         agent=agent,
         tools=[restricted_duckduckgo_tool,reteriver_tool],
         verbose=True,
-        max_iterations=3,
+        max_iterations=5,
     )
