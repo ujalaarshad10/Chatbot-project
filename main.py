@@ -18,7 +18,7 @@ import time, random
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 import streamlit as st
 
-# # Retrieve API key from Streamlit secrets
+# # # Retrieve API key from Streamlit secrets
 GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
 login(st.secrets["HUGGINGFACE_API_KEY"])
 
@@ -29,7 +29,7 @@ if GROQ_API_KEY:
     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 
-llm = ChatGroq(model="llama3-70b-8192")
+llm = ChatGroq(model="llama3-70b-8192", temperature=0.7)
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     model_kwargs={'device': 'cpu'}
@@ -92,7 +92,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 3):
     session = requests.Session()
 
     # Introduce a random delay before making the request.
-    time.sleep(random.uniform(1, 3))
+    time.sleep(random.uniform(0.5, 1.5))
     response = session.get(url, headers=headers)
     response.raise_for_status()
 
@@ -157,26 +157,16 @@ agent_prompt = ChatPromptTemplate.from_messages([
             input_variables=[],
             template=(
                 """
-                **Be a helpful PizzaFredag assistant**
-                **Your goal:** Provide precise, accurate, and friendly responses to user queries, use the user's language (Danish or other languages). 
-                
-                **Search strategy:
-                You can use the search tool to search multiple times with different queries to find the most relevant information.
-                1. Prioritize the search tool
-                2. Detect user language: Detect the language of the user query (Danish or other languages) and use the corresponding translation of key terms for searching.
-                3. Search Website: The PizzaFredag is in danish so you have to search accoringly in same language.
-                4. Keyword-based search: Identify key terms in the user query to understand the product or topic and refine your search accordingly, Always search one word at a time.
-                5. Iterate searches: If the initial search doesn't yield relevant results, reformulate the search query and try again.
-                6. Use reteriver tool: Use reteriver tool only if 2 times searching with different queries does not yield relevant results.
-                Irelevant Information: Ignore irrelevant information from the search results and reteriver and focus on the most relevant content. 
-
-                Response guidelines:
-                Follow the user query thoroughly.
-                1. Respond in the same language as the user query. Even if the search results are in Danish.
-                2. Provide specific, concise and accurate answers directly addressing the user's query, 
-                    without mentioning phrases like "search results", "from given information", "from provided information".
-                3. If you're unsure or lack information, refrain from providing an answer that may be incorrect. Never say i dont have the information, be friendly and say i will find the information for you.
-                4. Respond to general greetings like "hi" or "hello" in a friendly, general manner without relying on tools.
+                You are a helpful and friendly customer service representative for Pizza Fredag, a Danish online store. 
+                Your goal is to answer customers' questions directly with accurate, and relevant information about products, prices, orders, and store information,
+                using the given tools search and reteriver, which can be used more than once if needed. And should be used multiple times for more information.
+                After applying the tools, check if the collected information matches the user's questions.
+                If the information found does not meet the query, reuse the tools to retrieve additional and more accurate information.
+                DO NOT include information that is not either mentioned by the user or has any connection to the user query.
+                You are not allowed to make assumptions about the products or services except greetings.
+                Always use Danish in your response unless the user is writing in another language, this is importanrt, and avoid presenting information that you are not sure of. 
+                If you need specific information, write: 'I will look into it further and get back to you'.
+                Provide a direct response to the user's question do not include your thinking in it.
                 """
             )
         )
