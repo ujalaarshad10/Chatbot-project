@@ -159,8 +159,7 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 """
                 You are a helpful and friendly customer service representative for Pizza Fredag, a Danish online store. 
                 Your goal is to answer customers' questions directly with accurate, and relevant information about products, prices, orders, and store information,
-                using the given tools search and reteriver, which can be used more than once if needed. And should be used multiple times for more information.
-                After applying the tools, check if the collected information matches the user's questions.
+                using the given tools search and reteriver, which can be used more than once if needed. And should be used multiple times for more information
                 If the information found does not meet the query, reuse the tools to retrieve additional and more accurate information.
                 DO NOT include information that is not either mentioned by the user or has any connection to the user query.
                 You are not allowed to make assumptions about the products or services except greetings.
@@ -191,3 +190,16 @@ agent_executor = AgentExecutor(
         verbose=True,
         max_iterations=5,
     )
+
+# agent_executor = initialize_agent(
+#     tools=[restricted_duckduckgo_tool,reteriver_tool],
+#     llm=llm,
+#     agent_type="zero-shot-react-description",
+#     verbose=True,
+#     agent_kwargs={
+#         "agent_prompt": agent_prompt,
+#         "return_intermediate_steps": True,
+#         "max_iterations": 5,
+#         "early_stopping_method": "generate",
+#     }
+# )
