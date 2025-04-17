@@ -17,11 +17,15 @@ import time, random
 from langchain_openai import ChatOpenAI
 # load_dotenv()
 
+
+
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
+
 import streamlit as st
 
-# # # Retrieve API key from Streamlit secrets
-# GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
+# # # # Retrieve API key from Streamlit secrets
+# # GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 login(st.secrets["HUGGINGFACE_API_KEY"])
 
@@ -92,8 +96,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 3):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "en-US,en;q=0.9",
-        "Accept": "text/html,application/xhtml+xml",
-        "Referer": "https://duckduckgo.com/"
+        "Accept": "*/*"
     }
 
     url = f"https://html.duckduckgo.com/html/?q={query} from https://pizzafredag.dk/"
@@ -102,7 +105,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 3):
     session = requests.Session()
 
     # Introduce a random delay before making the request.
-    time.sleep(random.uniform(0.5, 2))
+    time.sleep(random.uniform(1, 2))
     response = session.get(url, headers=headers)
     response.raise_for_status()
 
@@ -130,7 +133,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 3):
         })
 
         # Optional: add a small delay between processing individual results.
-        time.sleep(random.uniform(0.5, 1.5))
+        time.sleep(random.uniform(1, 2))
 
     return results
 
@@ -227,15 +230,3 @@ agent_executor = AgentExecutor(
         max_iterations=5,
     )
 
-# agent_executor = initialize_agent(
-#     tools=[restricted_duckduckgo_tool,reteriver_tool],
-#     llm=llm,
-#     agent_type="zero-shot-react-description",
-#     verbose=True,
-#     agent_kwargs={
-#         "agent_prompt": agent_prompt,
-#         "return_intermediate_steps": True,
-#         "max_iterations": 5,
-#         "early_stopping_method": "generate",
-#     }
-# )
