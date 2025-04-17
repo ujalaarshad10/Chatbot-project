@@ -4,7 +4,7 @@ import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 # from dotenv import load_dotenv
 from langchain.tools import Tool
-from langchain_groq import ChatGroq
+# from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 import requests
@@ -14,26 +14,36 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from huggingface_hub import login
 import time, random
+from langchain_openai import ChatOpenAI
 # load_dotenv()
+
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 import streamlit as st
 
 # # # Retrieve API key from Streamlit secrets
-GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
+# GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 login(st.secrets["HUGGINGFACE_API_KEY"])
 
 
 
 # Check if the key was retrieved successfully
-if GROQ_API_KEY:
-    os.environ["GROQ_API_KEY"] = GROQ_API_KEY
+# if GROQ_API_KEY:
+#     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
+
+if OPENAI_API_KEY:
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 
-llm = ChatGroq(model="llama3-70b-8192", temperature=0.7)
+
+# llm = ChatGroq(model="llama3-70b-8192", temperature=0.7)
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     model_kwargs={'device': 'cpu'}
 )
+
+llm = ChatOpenAI(model="gpt-4.1-nano-2025-04-14", temperature=0.4)
+
 vectordb = Chroma(persist_directory="./Data/Vectordb", embedding_function=embeddings)
 
 def reteriver(query: str, max_results: int = 2):
@@ -92,7 +102,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 3):
     session = requests.Session()
 
     # Introduce a random delay before making the request.
-    time.sleep(random.uniform(0.5, 1.5))
+    time.sleep(random.uniform(0.5, 2))
     response = session.get(url, headers=headers)
     response.raise_for_status()
 
@@ -120,7 +130,7 @@ def search_duckduckgo_restricted(query: str, max_results: int = 3):
         })
 
         # Optional: add a small delay between processing individual results.
-        time.sleep(random.uniform(0.5, 1.0))
+        time.sleep(random.uniform(0.5, 1.5))
 
     return results
 
@@ -157,15 +167,41 @@ agent_prompt = ChatPromptTemplate.from_messages([
             input_variables=[],
             template=(
                 """
-                You are a helpful and friendly customer service representative for Pizza Fredag, a Danish online store. 
-                Your goal is to answer customers' questions directly with accurate, and relevant information about products, prices, orders, and store information,
-                using the given tools search and reteriver, which can be used more than once if needed. And should be used multiple times for more information
-                If the information found does not meet the query, reuse the tools to retrieve additional and more accurate information.
-                DO NOT include information that is not either mentioned by the user or has any connection to the user query.
-                You are not allowed to make assumptions about the products or services except greetings.
-                Always use Danish in your response unless the user is writing in another language, this is importanrt, and avoid presenting information that you are not sure of. 
-                If you need specific information, write: 'I will look into it further and get back to you'.
-                Provide a direct response to the user's question do not include your thinking in it.
+                You are a friendly and precise customer service agent for Pizza Fredag, a Danish online pizzeria.  
+                Your mission is to answer questions about products, prices, orders and store policies by *autonomously* using two tools:
+
+                1. **search**  
+                • Runs a DuckDuckGo search.  
+                • Syntax example:
+                    {{"tool": "search", "query": "pizza tilbud Fredag priser"}}  
+                • Strategy:
+                    a. Extract  highly specific keywords/phrases from the user's question.  
+                    b. Invoke **search** tool.  
+                    c. Examine results; if they don't directly address the question, refine your keywords (e.g., search individual terms seprately). For Example, if user query involves comparision of *EVO* vs *Easy Model*, first gahter information on *EVO* then on *Easy Model* then contrast them at the end.  
+                    d. Repeat up to **3** times always refining your keywords.
+
+                2. **retriever**  
+                • Queries the internal vector database.  
+                • Syntax:
+                    {{"tool": "retriever", "query": "<refined keywords>"}}  
+                • Use **once**, only *after* three search iterations.
+
+                **Response Workflow**  
+                1. Iterate Web Search up to 3 times, refining each query for maximum relevance.  
+                2. If still not enough information, call **retriever** once.  
+                3. Synthesize *all* gathered data into a concise final reply.  
+                4. If even the retriever yields nothing, offer a helpful general response in Danish and ask for clarification:  
+                “Jeg vil undersøge det nærmere og vende tilbage til dig. Kan du eventuelt uddybe…?”  
+                5. End every answer with a similar follow-up prompts like following:  
+                “Er der andet, jeg kan hjælpe med i dag?”
+
+                **Language**  
+                - Default: Danish. Match the user's language if they write in English or another language.  
+                - Never hallucinate facts; stick strictly to tool-found data or clearly signpost uncertainty.
+                - Never use filler or framing phrases like “i henhold til givne oplysninger,” “Jeg har fundet information,” “Ifølge hjemmesiden,” etc.
+                - Do not begin with “Jeg har fundet,” “Ifølge…,” or other redundant lead-ins.   
+                - Use a friendly, professional tone.
+                     
                 """
             )
         )
