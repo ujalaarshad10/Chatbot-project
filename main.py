@@ -13,12 +13,13 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, Syst
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from huggingface_hub import login
-import time, random
+from typing import List, Dict, Optional
+import textwrap
 from langchain_openai import ChatOpenAI
 # load_dotenv()
 
 
-
+# BRAVE_API_KEY = os.getenv("BRAVE_API_KEY_WEB")
 # OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 
@@ -27,9 +28,10 @@ import streamlit as st
 # # # # Retrieve API key from Streamlit secrets
 # # GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+BRAVE_API_KEY = st.secrets["BRAVE_API_KEY_WEB"]
 login(st.secrets["HUGGINGFACE_API_KEY"])
 
-
+    
 
 # Check if the key was retrieved successfully
 # if GROQ_API_KEY:
@@ -47,108 +49,142 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 llm = ChatOpenAI(model="gpt-4.1-nano-2025-04-14", temperature=0.4)
-
 vectordb = Chroma(persist_directory="./Data/Vectordb", embedding_function=embeddings)
-
+# ------------------ Reteriver Function ------------------
 def reteriver(query: str, max_results: int = 2):
     docs = vectordb.similarity_search(query, k=max_results)
     if not docs:
         return "No relevant documents found."
     return "\n".join(doc.page_content[:500] if len(doc.page_content) >= 500 else doc.page_content for doc in docs)
 
-# def search_duckduckgo_restricted(query: str, max_results: int = 3):
-#     headers = {
-#         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-#     }
-#     url = f"https://html.duckduckgo.com/html/?q={query} site:https://pizzafredag.dk/"
-#     response = requests.get(url, headers=headers)
-#     response.raise_for_status()
+# -----------------Search Function------------------ 
+def brave_search(query: str, api_key: str = BRAVE_API_KEY , site: str = "https://pizzafredag.dk/", count: int = 3, min_desc_length: int = 300) -> List[Dict[str, Optional[str]]]:
+    """
+    Search within a specific site using Brave Search API and generate a description of at least 500 characters per URL.
     
-#     soup = BeautifulSoup(response.text, 'html.parser')
-#     results = []
-#     for i, result in enumerate(soup.find_all('div', class_='result'), start=1):
-#         if i > max_results:
-#             break
-#         title_tag = result.find('a', class_='result__a')
-#         if not title_tag:
-#             continue
-#         link = title_tag['href']
-#         snippet_tag = result.find('a', class_='result__snippet')
-#         snippet = snippet_tag.text.strip() if snippet_tag else 'No description available'
-        
-#         results.append({
-#             'id': i,
-#             'link': link,
-#             'search_description': snippet
-#         })
-        
-#     return results
+    Args:
+        query (str): The search query.
+        site (str): The site to restrict search to (e.g., 'https://pizzafredag.dk/').
+        api_key (str): Brave Search API key.
+        count (int): Number of results to return (default: 10).
+        min_desc_length (int): Minimum length of the generated description (default: 500).
     
-def search_duckduckgo_restricted(query: str, max_results: int = 3):
-    # Define a list of realistic user agents to rotate through.
-    USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    ]
-
-    # Rotate the User-Agent and add additional headers to mimic a real browser.
+    Returns:
+        List[Dict[str, Optional[str]]]: List of results with URL, title, snippet, and description.
+    """
+    # Ensure site doesn't end with a slash and format the site-specific query
+    site = site.rstrip('/')
+    full_query = f"{query} site:{site}"
+    
+    # Brave Search API endpoint
+    url = "https://api.search.brave.com/res/v1/web/search"
+    
+    # Set headers with API key
     headers = {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept": "*/*"
+        "Accept": "application/json",
+        "X-Subscription-Token": api_key
     }
-
-    url = f"https://html.duckduckgo.com/html/?q={query} from https://pizzafredag.dk/"
-
-    # Use a session to persist headers and cookies.
-    session = requests.Session()
-
-    # Introduce a random delay before making the request.
-    time.sleep(random.uniform(1, 2))
-    response = session.get(url, headers=headers)
-    response.raise_for_status()
-
-    # Check for potential blocks or CAPTCHA prompts.
-    if "captcha" in response.text.lower() or "unusual traffic" in response.text.lower():
-        print("Blocked or CAPTCHA encountered. Consider reducing request frequency or using a proxy.")
+    
+    # Set query parameters
+    params = {
+        "q": full_query,
+        "count": count
+    }
+    
+    formatted_results = []
+    
+    try:
+        # Make the API request
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        # Parse the JSON response
+        data = response.json()
+        
+        # Extract web search results
+        results = data.get("web", {}).get("results", [])
+        
+        # Process each result
+        for result in results:
+            result_url = result.get("url")
+            result_title = result.get("title")
+            result_snippet = result.get("description")  # Brave's description as snippet
+            
+            # Fetch and generate description from the URL
+            description = ""
+            try:
+                # Fetch the page content
+                page_response = requests.get(result_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+                page_response.raise_for_status()
+                
+                # Parse the page with BeautifulSoup
+                soup = BeautifulSoup(page_response.text, "html.parser")
+                
+                # Extract text from relevant tags (e.g., <p>, <div>, excluding scripts/styles)
+                for element in soup.find_all(["script", "style", "header", "footer", "nav"]):
+                    element.decompose()  # Remove unwanted elements
+                
+                # Collect text from paragraphs or other content tags
+                text_elements = soup.find_all(["p"])
+                collected_text = []
+                for elem in text_elements:
+                    text = elem.get_text(strip=True)
+                    if text and len(text) > 30:  # Ignore very short fragments
+                        collected_text.append(text)
+                
+                # Build description until it meets the minimum length
+                for text in collected_text:
+                    description += text + " "
+                    if len(description) >= min_desc_length:
+                        break
+                
+                # If description is too short, use whatever is available
+                if len(description) < min_desc_length:
+                    description = description
+                else:
+                    # Shorten if too long, preserving meaning
+                    description = textwrap.shorten(description, width=min_desc_length + 100, placeholder="...")
+                
+            except (requests.exceptions.RequestException, ValueError) as e:
+                print(f"Error fetching content for {result_url}: {e}")
+                description = "Unable to fetch content for this URL."
+            
+            # Append the result
+            formatted_results.append({
+                "url": result_url,
+                "title": result_title,
+                "snippet": result_snippet,
+                "description": description
+            })
+        
+        return formatted_results
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Error making API request: {e}")
+        return []
+    except ValueError as e:
+        print(f"Error parsing JSON response: {e}")
         return []
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-    results = []
-    for i, result in enumerate(soup.find_all('div', class_='result'), start=1):
-        if i > max_results:
-            break
-        title_tag = result.find('a', class_='result__a')
-        if not title_tag:
-            continue
-        link = title_tag['href']
-        snippet_tag = result.find('a', class_='result__snippet')
-        snippet = snippet_tag.text.strip() if snippet_tag else 'No description available'
-
-        results.append({
-            'id': i,
-            'link': link,
-            'search_description': snippet
-        })
-
-        # Optional: add a small delay between processing individual results.
-        time.sleep(random.uniform(1, 2))
-
-    return results
-
  
+
+
 # Wrapping the function as a LangChain Tool
-restricted_duckduckgo_tool = Tool(
+search_tool = Tool(
     name="search",
-    func=search_duckduckgo_restricted,  # Direct reference to function
+    func=brave_search,  # Direct reference to function
     description=
-    """Searches DuckDuckGo and returns results from the web.
+    """Searches Brave and returns results from the web.
     Args: query: str -> The search query
-    Returns: list -> A list of dictionaries containing search results
+    Returns: list -> A list of dictionaries containing search results with following format for each result 
+    "url": Site url,
+    "title": result title,
+    "snippet": result short description,
+    "description": site long description
     
     """
 )
+
 
 
 reteriver_tool = Tool(
@@ -174,7 +210,7 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 Your mission is to answer questions about products, prices, orders and store policies by *autonomously* using two tools:
 
                 1. **search**  
-                • Runs a DuckDuckGo search.  
+                • Runs a Brave search API.  
                 • Syntax example:
                     {{"tool": "search", "query": "pizza tilbud Fredag priser"}}  
                 • Strategy:
@@ -194,14 +230,16 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 2. If still not enough information, call **retriever** once.  
                 3. Synthesize *all* gathered data into a concise final reply.  
                 4. If even the retriever yields nothing, offer a helpful general response in Danish and ask for clarification:  
-                “Jeg vil undersøge det nærmere og vende tilbage til dig. Kan du eventuelt uddybe…?”  
-                5. End every answer with a similar follow-up prompts like following:  
+                “Jeg vil undersøge det nærmere og vende tilbage til dig. Kan du eventuelt uddybe…?” 
+                5. Always provide a **summary** of the information you found at the end of final response, including the source URLs as **Reference** for customer to further look into.  
+                6. End every answer with a similar follow-up prompts like following:  
                 “Er der andet, jeg kan hjælpe med i dag?”
 
                 **Language**  
                 - Default: Danish. Match the user's language if they write in English or another language.  
                 - Never hallucinate facts; stick strictly to tool-found data or clearly signpost uncertainty.
                 - Never use filler or framing phrases like “i henhold til givne oplysninger,” “Jeg har fundet information,” “Ifølge hjemmesiden,” etc.
+                - Always provide a **Reference** of the information you found at the end of final response. 
                 - Do not begin with “Jeg har fundet,” “Ifølge…,” or other redundant lead-ins.   
                 - Use a friendly, professional tone.
                      
@@ -220,12 +258,12 @@ agent_prompt = ChatPromptTemplate.from_messages([
 ])
 
 agent = create_tool_calling_agent(
-        llm =llm, tools=[restricted_duckduckgo_tool,reteriver_tool], prompt=agent_prompt)
+        llm =llm, tools=[search_tool,reteriver_tool], prompt=agent_prompt)
 
 
 agent_executor = AgentExecutor(
         agent=agent,
-        tools=[restricted_duckduckgo_tool,reteriver_tool],
+        tools=[search_tool,reteriver_tool],
         verbose=True,
         max_iterations=5,
     )
