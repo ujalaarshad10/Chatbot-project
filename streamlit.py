@@ -6,10 +6,10 @@ torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__
 
 example_1="""
 Eksempel 1:
-input: Hvornår på ugen sender I pakker?
-output: Pizza Fredag sender pakker ud hver dag, og hvis du bestiller inden 13:00, vil du få din ordre afsendt samme
-dag. Vi leverer til hele landet.
-Er der andet, jeg kan hjælpe med i dag?
+input: Hvilken tid på ugen sender du pakker?
+Output: Vi hos Pizzafredag sender pakker ud hver dag, og bestiller du inden kl. 13:00, får du din ordre sendt ens
+dag. Vi leverer til hele landet. 
+For mere information, kontakt os via e-mail på support@pizzafredag.dk
 """
 example_2="""
 Eksempel 2:
@@ -20,14 +20,20 @@ kan give dig en god smagsoplevelse. Hvis du er mere erfaren og ønsker at lære 
 pizzabagning, kan "Perfekt Pizza" af Jon Daniel Edlund være en god inspiration. Hvis du vil have
 en ægte italiensk pizzasmag, kan Revolve Portable Pizzaovn være en god valg, da den er
 certificeret af AVPN og kan give dig en autentisk Napolitansk pizzaoplevelse.
-Er der noget andet, jeg kan hjælpe dig med?
+"""
+example_3="""
+Eksempel 3:
+input: Er der mulighed for rabat?
+output: Absolut! Hos Pizzafredag tilbyder vi flere rabatter og tilbud. 
+Du kan tilmelde dig deres nyhedsbrev for at få adgang til tilbud, opskrifter, nyheder og konkurrencer. 
+Hvis du leder efter specifikke rabatter på produkter, kan du også kontakte deres kundeservice via e-mail på support@pizzafredag.dk for at høre om prismatch eller aktuelle tilbud.
 """
 
 
 few_shot_prompt= f"""
 {example_1}
 {example_2}
-
+{example_3}
 """
 
 def init_chat_history():

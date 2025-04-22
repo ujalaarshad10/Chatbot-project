@@ -1,8 +1,8 @@
 import os
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-# from dotenv import load_dotenv
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+from dotenv import load_dotenv
 from langchain.tools import Tool
 # from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,20 +16,20 @@ from huggingface_hub import login
 from typing import List, Dict, Optional
 import textwrap
 from langchain_openai import ChatOpenAI
-# load_dotenv()
+load_dotenv()
 
 
-# BRAVE_API_KEY = os.getenv("BRAVE_API_KEY_WEB")
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+BRAVE_API_KEY = os.getenv("BRAVE_API_KEY_WEB")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 
 import streamlit as st
 
 # # # # Retrieve API key from Streamlit secrets
 # # GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-BRAVE_API_KEY = st.secrets["BRAVE_API_KEY_WEB"]
-login(st.secrets["HUGGINGFACE_API_KEY"])
+# OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+# BRAVE_API_KEY = st.secrets["BRAVE_API_KEY_WEB"]
+# login(st.secrets["HUGGINGFACE_API_KEY"])
 
     
 
@@ -48,7 +48,7 @@ embeddings = HuggingFaceEmbeddings(
     model_kwargs={'device': 'cpu'}
 )
 
-llm = ChatOpenAI(model="gpt-4.1-nano-2025-04-14", temperature=0.4)
+llm = ChatOpenAI(model="gpt-4.1-nano-2025-04-14", temperature=0.6)
 vectordb = Chroma(persist_directory="./Data/Vectordb", embedding_function=embeddings)
 # ------------------ Reteriver Function ------------------
 def reteriver(query: str, max_results: int = 2):
@@ -206,8 +206,8 @@ agent_prompt = ChatPromptTemplate.from_messages([
             input_variables=[],
             template=(
                 """
-                You are a friendly and precise customer service agent for Pizza Fredag, a Danish online pizzeria.  
-                Your mission is to answer questions about products, prices, orders and store policies by *autonomously* using two tools:
+                You are a friendly and precise customer service agent for Pizzafredag, a Danish online pizzeria.  
+                Your mission is to answer questions about products, prices, orders and store policies as a Staff memeber by *autonomously* using two tools:
 
                 1. **search**  
                 • Runs a Brave search API.  
@@ -231,15 +231,14 @@ agent_prompt = ChatPromptTemplate.from_messages([
                 3. Synthesize *all* gathered data into a concise final reply.  
                 4. If even the retriever yields nothing, offer a helpful general response in Danish and ask for clarification:  
                 “Jeg vil undersøge det nærmere og vende tilbage til dig. Kan du eventuelt uddybe…?” 
-                5. Always provide a **summary** of the information you found at the end of final response, including the source URLs as **Reference** for customer to further look into.  
-                6. End every answer with a similar follow-up prompts like following:  
-                “Er der andet, jeg kan hjælpe med i dag?”
+                5. Pizzafredag is a Danish company, and its customer service is available from 07:00 to 22:00, and their website as well as the you a Chatbot is available 24/7.
+                6. You should refer customers to contact Pizzafredag by email i.e support@pizzafredag.dk when, for example, they ask about avalible offers, discounts or similar inquiries.
+                
 
                 **Language**  
                 - Default: Danish. Match the user's language if they write in English or another language.  
                 - Never hallucinate facts; stick strictly to tool-found data or clearly signpost uncertainty.
-                - Never use filler or framing phrases like “i henhold til givne oplysninger,” “Jeg har fundet information,” “Ifølge hjemmesiden,” etc.
-                - Always provide a **Reference** of the information you found at the end of final response. 
+                - Never frame your answer as “research”: do **not** mention searches, tools, or “according to…”. Instead launch directly into a first-person response: e.g. “Vi tilbyder…” or “Jeg kan bekræfte….”
                 - Do not begin with “Jeg har fundet,” “Ifølge…,” or other redundant lead-ins.   
                 - Use a friendly, professional tone.
                      
