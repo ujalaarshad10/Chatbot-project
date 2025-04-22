@@ -1,8 +1,8 @@
 import os
-# __import__('pysqlite3')
-# import sys
-# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-from dotenv import load_dotenv
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# from dotenv import load_dotenv
 from langchain.tools import Tool
 # from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,20 +16,20 @@ from huggingface_hub import login
 from typing import List, Dict, Optional
 import textwrap
 from langchain_openai import ChatOpenAI
-load_dotenv()
+# load_dotenv()
 
 
-BRAVE_API_KEY = os.getenv("BRAVE_API_KEY_WEB")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# BRAVE_API_KEY = os.getenv("BRAVE_API_KEY_WEB")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # GROQ_API_KEY = os.getenv("GROQ_CLOUD_API_KEY")
 
 import streamlit as st
 
 # # # # Retrieve API key from Streamlit secrets
 # # GROQ_API_KEY = st.secrets["GROQ_CLOUD_API_KEY"]
-# OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-# BRAVE_API_KEY = st.secrets["BRAVE_API_KEY_WEB"]
-# login(st.secrets["HUGGINGFACE_API_KEY"])
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+BRAVE_API_KEY = st.secrets["BRAVE_API_KEY_WEB"]
+login(st.secrets["HUGGINGFACE_API_KEY"])
 
     
 
